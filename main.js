@@ -1,9 +1,9 @@
 /********Change variables in this section and then run */
-const offspringMutation = 2; // #of mutations that offspring will have when born
-const startingPopulation = 500; //number of starting organisms in the simulation
-const numberOfCycles = 25; // number of cycles the simutation will run for
-const userMutationChance = 0.33; // % chance an organism will have a mutation in a cycle
-const userSurvivorChance = 0.92; // chance an organism with the LIKELY TO SURVIVE trait will live another cycle.  Organisms without this trait will survive half as frequently
+const offspringMutationChance = 0.25; // % chance that offspring will have mutation when born
+const startingPopulation = 2000; //number of starting organisms in the simulation
+const numberOfCycles = 15; // number of cycles the simutation will run for
+const userMutationChance = 0.35; // % chance an organism will have a mutation in a cycle
+const userSurvivorChance = 0.7; // chance an organism with the LIKELY TO SURVIVE trait will live another cycle.  Organisms without this trait will survive half as frequently
 
 /********Changes to any variables below, not guaranteed to work */
 let lifetimePopulation = 0; // Count of all pAequor produced
@@ -38,10 +38,13 @@ const generatePopulation = (numStartingOrganisms) => {
 
 // calculate the % of the population with the likely to survive trait
 const percentWithTrait = (population) => {
-  let sum = population.reduce(
-    (pV, cV) => pV.willLikelySurvive() + cV.willLikelySurvive()
-  );
-  return sum / population.length;
+  let sum = population.reduce((a, b, currentIndex) => {
+    if (population[currentIndex].willLikelySurvive()) b = 1;
+    else b = 0;
+    return a + b;
+  }, 0);
+
+  return `${((sum / population.length) * 100).toFixed(2)}%`;
 };
 //completeCycle() takes an array of pAequor and evaluates each elements cycle results.
 //if the organism survives, the function will check for reproduction/mutation and simulate the results.
@@ -56,7 +59,7 @@ const completeCycle = (pAequorArray) => {
           lifetimePopulation + 1,
           pAequor.dnaArray
         );
-        newAequor.mutate(offspringMutation);
+        newAequor.mutate(offspringMutationChance);
         newGeneration.push(newAequor);
       }
     }
@@ -91,12 +94,8 @@ const pAequorFactory = (specimenNum, dnaArray) => {
     // .mutate() is responsible for randomly selecting a base in the object’s dna property and changing the current base to a different base.
     // For example, if the randomly selected base is the 1st base and it is 'A', the base must be changed to 'T', 'C', or 'G'. But it cannot be 'A' again.
     // return the object’s dna.
-    mutate(numMutations = 1) {
-      for (let index = 0; index < numMutations; index++) {
-        let baseIndex = Math.floor(Math.random() * dnaArray.length);
-        dnaArray[baseIndex] = returnRandBase(dnaArray[baseIndex]);
-      }
-      {
+    mutate(mutationChance = 1) {
+      if (Math.random() < mutationChance) {
         let baseIndex = Math.floor(Math.random() * dnaArray.length);
         dnaArray[baseIndex] = returnRandBase(dnaArray[baseIndex]);
       }
@@ -133,18 +132,22 @@ const pAequorFactory = (specimenNum, dnaArray) => {
     // Otherwise, .willLikelySurvive() returns false.
     willLikelySurvive() {
       return (
-        this.dnaArray.filter((base) => base === "C" || base === "G").length >
+        this.dnaArray.filter((base) => base === "C" || base === "G").length >=
         15 * 0.6
       );
     },
     isAlive() {
-      let alive =
-        Math.random() <
-        (this.willLikelySurvive()
-          ? this.likelySurvival
-          : this.likelySurvival / 2);
-      if (alive) this.age++;
-      return alive && this.age <= this.lifeSpan;
+      // let alive =
+      //   Math.random() >
+      //   (this.willLikelySurvive()
+      //     ? this.likelySurvival
+      //     : this.likelySurvival / 2.5);
+      let factor = this.willLikelySurvive()
+        ? this.likelySurvival
+        : this.likelySurvival / 2;
+
+      if ((stillAlive = Math.random() < factor)) this.age++;
+      return stillAlive && this.age <= this.lifeSpan;
     },
     canReplicate() {
       //identifies if the creature can reproduce this cycle
@@ -164,7 +167,6 @@ for (let index = 1; index <= numberOfCycles; index++) {
   if (pAequorPopulation.length === 0) break;
 }
 endedWithTrait = percentWithTrait(pAequorPopulation);
-
 console.log("End Simulation");
 console.log(
   `Throughout the simulation ${lifetimePopulation} organisms were created!`
