@@ -1,6 +1,15 @@
+/********Change variables in this section and then run */
+const offspringMutation = 2; // #of mutations that offspring will have when born
+const startingPopulation = 500; //number of starting organisms in the simulation
+const numberOfCycles = 25; // number of cycles the simutation will run for
+const userMutationChance = 0.33; // % chance an organism will have a mutation in a cycle
+const userSurvivorChance = 0.92; // chance an organism with the LIKELY TO SURVIVE trait will live another cycle.  Organisms without this trait will survive half as frequently
+
+/********Changes to any variables below, not guaranteed to work */
 let lifetimePopulation = 0; // Count of all pAequor produced
-const offspringMutation = 2; //#of mutations that offspring will have
 let pAequorPopulation = []; //living population
+let startWithTrait = 0; // percent with trait to start simulation
+let endedWithTrait = 0; // percent with trat at end of simulation
 
 // Returns a random DNA base, for mutation purposes you can exclude a base that is to be mutated.
 const returnRandBase = (excludedBase = "") => {
@@ -25,6 +34,14 @@ const generatePopulation = (numStartingOrganisms) => {
     startingPopulation.push(pAequorFactory(index, mockUpStrand()));
   }
   return startingPopulation;
+};
+
+// calculate the % of the population with the likely to survive trait
+const percentWithTrait = (population) => {
+  let sum = population.reduce(
+    (pV, cV) => pV.willLikelySurvive() + cV.willLikelySurvive()
+  );
+  return sum / population.length;
 };
 //completeCycle() takes an array of pAequor and evaluates each elements cycle results.
 //if the organism survives, the function will check for reproduction/mutation and simulate the results.
@@ -66,9 +83,9 @@ const pAequorFactory = (specimenNum, dnaArray) => {
     dnaArray: dnaArray,
     lifeSpan: 8,
     reproductionCycle: 1,
-    likelySurvival: 0.92, //chance to survive if organisms DNA gives it a likely chance
+    likelySurvival: userSurvivorChance, //chance to survive if organisms DNA gives it a likely chance
     age: 0,
-    mutationChance: 0.43, //chance to mutate in a cycle
+    mutationChance: userMutationChance, //chance to mutate in a cycle
     alive: true,
 
     // .mutate() is responsible for randomly selecting a base in the object’s dna property and changing the current base to a different base.
@@ -136,27 +153,21 @@ const pAequorFactory = (specimenNum, dnaArray) => {
   };
 };
 
-console.log("Start Debug");
-pAequorPopulation = generatePopulation(500);
+console.log("Start Simulation");
+pAequorPopulation = generatePopulation(startingPopulation);
+startWithTrait = percentWithTrait(pAequorPopulation);
 // simulate 16 years segments
-for (let index = 0; index < 25; index++) {
+for (let index = 1; index <= numberOfCycles; index++) {
   console.log(`Generation ${index}:`);
   pAequorPopulation = completeCycle(pAequorPopulation);
   console.log(`   Total pAequor..${pAequorPopulation.length}`);
   if (pAequorPopulation.length === 0) break;
 }
+endedWithTrait = percentWithTrait(pAequorPopulation);
 
-console.log("End Debug");
-/* 
-
-
-Project Extensions & Solution
-
-8.
-Great work! Visit our forums to compare your project to our sample solution code. You can also learn how to host your own solution on GitHub so you can share it with other learners! Your solution might look different from ours, and that’s okay! There are multiple ways to solve these projects, and you’ll learn more by seeing others’ code.
-
-9.
-If you’d like to challenge yourself further, you could consider the following:
-
-Create a .complementStrand() method to the factory function’s object that returns the complementary DNA strand. The rules are that 'A's match with 'T's and vice versa. Also, 'C's match with 'G's and vice versa. (Check the hint for more details)
-Use the .compareDNA() to find the two most related instances of pAequor. */
+console.log("End Simulation");
+console.log(
+  `Throughout the simulation ${lifetimePopulation} organisms were created!`
+);
+console.log(`% with Likely to Survive at Start: ${startWithTrait}`);
+console.log(`% with Likely to Survive at Finish: ${endedWithTrait}`);
